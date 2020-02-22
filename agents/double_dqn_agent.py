@@ -9,7 +9,7 @@ from config import Config
 from  memory import Memory
 from utils import plot_final_results
 
-class DQNAgent:
+class DoubleDQNAgent:
 	def __init__(self, device, memory_size, env, gamma=0.99, tau=0.01):
 		self.memory = Memory(memory_size)
 		self.device = device
@@ -20,13 +20,13 @@ class DQNAgent:
 		self.model = DQN(env.observation_space.shape[0], env.action_space.n).to(self.device)
 		self.target_model = DQN(env.observation_space.shape[0], env.action_space.n).to(self.device)
 		
-		for target_param, param in zip(self.model.parameters(), self.target_model.parameters()):
+		for target_param, param in zip(self.target_model.parameters(), self.model.parameters()):
 			target_param.data.copy_(param)
 
 		self.optimizer = torch.optim.Adam(self.model.parameters())
 		
 		
-	def get_action(self, state, eps=0.1):
+	def get_action(self, state, eps=0.1, step=0):
 		if random.random() < eps:
 			return self.env.action_space.sample()
 
@@ -46,7 +46,6 @@ class DQNAgent:
 		dones = torch.tensor(dones).float().to(self.device)
 
 		actions = actions.view(actions.size(0), 1)
-
 
 		curr_q_val = self.model(states).gather(1, actions).squeeze()
 		next_q_val = self.target_model(next_states)
@@ -73,7 +72,7 @@ class DQNAgent:
 
 	def save_model(self, file_name = None):
 		if file_name is None:
-			file_name = f"model_{datetime.datetime.now()}.pt"
+			file_name = f"model_double_dqn_{datetime.datetime.now()}.pt"
 		torch.save(self.model.state_dict(), file_name)
 
 	def load_model(self, file_name):

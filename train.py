@@ -18,32 +18,41 @@ from torch.utils.tensorboard import SummaryWriter
 import gym
 
 from config import Config
-from agents.dqn_agent  import DQNAgent
+from agents.double_dqn_agent import DoubleDQNAgent
+from agents.ddpg_agent import DDPGAgent
 from  memory import Memory
 from utils import plot_final_results
 
 
-def get_environment():
-	env = gym.make("LunarLander-v2")
-	return env
+def get_environment(mode="discret"):
+	if mode == "discret":
+		return gym.make("LunarLander-v2")
+	else:
+		return gym.make("LunarLanderContinuous-v2")
 
 
 def train(train_config):
 	device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-	env = get_environment()
+	env = get_environment(train_config.mode)
+	agent = None
+
+	if train_config.mode == "discret":
+		agent = DoubleDQNAgent(device, train_config.replay_memory_size, env)
+	else:
+		agent = DDPGAgent(device, train_config.replay_memory_size, env)
+	
 
 	episode_rewards = []
 	episode_loss = []
 	evaluation_rewards = []
 
-	agent = DQNAgent(device, train_config.replay_memory_size, env)
 
 	for episode in range(train_config.episodes):
 		state = env.reset()
 		episode_reward = 0
 
 		for step in range(train_config.max_steps):
-			action = agent.get_action(state)
+			action = agent.get_action(state, eps=0.1, step=step)
 
 			next_state, reward, done, _ = env.step(action)
 			agent.memory.push(state, action, reward, next_state, done)
@@ -64,6 +73,10 @@ def train(train_config):
 		if episode % 5 == 0:
 			curr_rewards = evaluate(agent, env, 1, True)
 			evaluation_rewards.append(sum(curr_rewards) / len(curr_rewards))
+
+
+		if hasattr(agent, "noise"):
+			agent.noise.reset()
 
 
 	plot_final_results({
@@ -115,6 +128,7 @@ def main(args: Namespace) -> None:
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
+	parser.add_argument("--mode", type=str, default="continuous", help="mode of env")
 	parser.add_argument("-ep", "--episodes", type=int, default=100, help="number of episodes")
 	parser.add_argument("-mem", "--replay-memory-size", type=int, default=10000, help="replay memory size")
 	parser.add_argument("--max-steps", type=int, default=1000, help="max steps for episode")
