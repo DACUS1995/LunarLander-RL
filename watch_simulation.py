@@ -4,26 +4,38 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 import argparse
+import gym
 
 from config import Config
-from agents.dqn_agent  import DQNAgent
+from agents.double_dqn_agent import DoubleDQNAgent
+from agents.ddpg_agent import DDPGAgent
 from  memory import Memory
 from utils import plot_final_results
 
 
-def get_environment():
-	pass
+def get_environment(mode="discrete"):
+	if mode == "discrete":
+		return gym.make("LunarLander-v2")
+	else:
+		return gym.make("LunarLanderContinuous-v2")
 
-
-def get_agent(device, env):
-	return DQNAgent(device, 0, env)
+def get_agent(device, env, mode="discrete"):
+	if mode == "discrete":
+		agent = DoubleDQNAgent(device, 0, env)
+		agent.load_model("./saved_models/model_double_dqn.pt")
+		return agent
+	else:
+		agent = DDPGAgent(device, 0, env)
+		agent.load_model("./saved_models/model_ddpg.pt")
+		return agent
 
 
 def run_simulation(max_steps, num_episodes = 1):
 	device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-	env = get_environment()
+	mode = "discrete"
 
-	agent = get_agent(device, env)
+	env = get_environment(mode)
+	agent = get_agent(device, env, mode)
 
 	with torch.no_grad():
 		for episode in range(num_episodes):
@@ -42,9 +54,9 @@ def run_simulation(max_steps, num_episodes = 1):
 					break
 
 			# End of episode
-			episode_rewards.append(episode_reward)
+			# episode_rewards.append(episode_reward)
 
-	return episode_rewards
+	return
 
 
 

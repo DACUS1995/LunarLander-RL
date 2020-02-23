@@ -24,8 +24,8 @@ from  memory import Memory
 from utils import plot_final_results
 
 
-def get_environment(mode="discret"):
-	if mode == "discret":
+def get_environment(mode="discrete"):
+	if mode == "discrete":
 		return gym.make("LunarLander-v2")
 	else:
 		return gym.make("LunarLanderContinuous-v2")
@@ -36,7 +36,7 @@ def train(train_config):
 	env = get_environment(train_config.mode)
 	agent = None
 
-	if train_config.mode == "discret":
+	if train_config.mode == "discrete":
 		agent = DoubleDQNAgent(device, train_config.replay_memory_size, env)
 	else:
 		agent = DDPGAgent(device, train_config.replay_memory_size, env)
@@ -73,9 +73,11 @@ def train(train_config):
 		if episode % 5 == 0:
 			curr_rewards = evaluate(agent, env, 5, True)
 			evaluation_rewards.append(sum(curr_rewards) / len(curr_rewards))
+			print(f"[Evaluation] Average episode reward: {evaluation_rewards[-1]}")
 			
 			if best_evaluation_score < evaluation_rewards[-1]:
 				if train_config.save == True:
+					print("Saving new model...")
 					agent.save_model()
 				best_evaluation_score = evaluation_rewards[-1]
 
@@ -120,7 +122,6 @@ def evaluate(
 
 			# Render only the first episode
 			render = False
-			print(f"[Evaluation] episode reward: {episode_reward}")
 
 			# End of episode
 			episode_rewards.append(episode_reward)
@@ -143,10 +144,10 @@ def main(args: Namespace) -> None:
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--mode", type=str, default="continuous", help="mode of env")
-	parser.add_argument("-ep", "--episodes", type=int, default=1000, help="number of episodes")
+	parser.add_argument("-ep", "--episodes", type=int, default=100, help="number of episodes")
 	parser.add_argument("-mem", "--replay-memory-size", type=int, default=10000, help="replay memory size")
 	parser.add_argument("--max-steps", type=int, default=1000, help="max steps for episode")
 	parser.add_argument("--batch-size", type=int, default=32, help="model optimization batch sizes")
-	parser.add_argument("--save", type=bool, default=False, help="save the trained model")
+	parser.add_argument("--save", type=bool, default=True, help="save the trained model")
 	args = parser.parse_args()
 	main(args)

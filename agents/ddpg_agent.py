@@ -11,7 +11,7 @@ from  memory import Memory
 
 
 class DDPGAgent:
-	def __init__(self, device, memory_size, env, gamma=0.99, tau=0.1):
+	def __init__(self, device, memory_size, env, gamma=0.99, tau=0.05):
 		self.memory = Memory(memory_size)
 		self.device = device
 		self.gamma = gamma
@@ -52,18 +52,18 @@ class DDPGAgent:
 
 		states = torch.tensor(states).to(self.device)
 		actions = torch.tensor(actions).float().to(self.device)
-		rewards = torch.tensor(rewards).to(self.device)
+		rewards = torch.tensor(rewards).to(self.device).unsqueeze(1)
 		next_states = torch.tensor(next_states).to(self.device)
-		dones = torch.tensor(dones).float().to(self.device)
+		dones = torch.tensor(dones).float().to(self.device).unsqueeze(1)
 
 		# Critic Loss
-		curr_q_value = self.critic(states, actions).squeeze()
+		curr_q_value = self.critic(states, actions)
 		next_action = self.actor_target(next_states)
-		next_q_value = self.critic_target(states, next_action).squeeze()
+		next_q_value = self.critic_target(states, next_action)
 
-		target_q_value = rewards + self.gamma * next_q_value
+		target_q_value = rewards + (1 - dones) * self.gamma * next_q_value
 		critic_loss = F.mse_loss(curr_q_value, target_q_value.detach())
-
+		
 		# Actor Loss
 		actor_loss = -self.critic(states, self.actor(states)).mean()
 
@@ -81,16 +81,17 @@ class DDPGAgent:
 		critic_loss.backward()
 		self.optimizer_critic.step()
 		
-		for target_param, param in zip(self.actor_target.parameters(), self.actor.parameters()):
-			target_param.data.copy_(self.tau * param + (1 - self.tau) * target_param)
-
-		for target_param, param in zip(self.critic_target.parameters(), self.critic.parameters()):
-			target_param.data.copy_(self.tau * param + (1 - self.tau) * target_param)
+		if ep % 2 == 0:
+			for target_param, param in zip(self.actor_target.parameters(), self.actor.parameters()):
+				target_param.data.copy_(self.tau * param + (1 - self.tau) * target_param)
+	
+			for target_param, param in zip(self.critic_target.parameters(), self.critic.parameters()):
+				target_param.data.copy_(self.tau * param + (1 - self.tau) * target_param)
 
 
 	def save_model(self, file_name = None):
 		if file_name is None:
-			file_name = f"model_ddpg.pt"
+			file_name = f"./saved_models/model_ddpg.pt"
 		torch.save(self.actor.state_dict(), file_name)
 
 	def load_model(self, file_name):

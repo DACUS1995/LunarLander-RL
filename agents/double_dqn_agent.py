@@ -72,7 +72,7 @@ class DoubleDQNAgent:
 
 	def save_model(self, file_name = None):
 		if file_name is None:
-			file_name = f"model_double_dqn_{datetime.datetime.now()}.pt"
+			file_name = f"./saved_models/model_double_dqn.pt"
 		torch.save(self.model.state_dict(), file_name)
 
 	def load_model(self, file_name):
