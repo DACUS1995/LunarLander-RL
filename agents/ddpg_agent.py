@@ -11,7 +11,7 @@ from  memory import Memory
 
 
 class DDPGAgent:
-	def __init__(self, device, memory_size, env, gamma=0.99, tau=0.01):
+	def __init__(self, device, memory_size, env, gamma=0.99, tau=0.1):
 		self.memory = Memory(memory_size)
 		self.device = device
 		self.gamma = gamma
@@ -58,10 +58,10 @@ class DDPGAgent:
 
 		# Critic Loss
 		curr_q_value = self.critic(states, actions)
-		next_action = self.actor(next_states)
+		next_action = self.actor_target(next_states)
 		next_q_value = self.critic_target(states, next_action)
 
-		target_q_value = rewards + (1 - dones) * self.gamma * next_q_value
+		target_q_value = rewards + self.gamma * next_q_value
 		critic_loss = F.mse_loss(curr_q_value, target_q_value.detach())
 
 		# Actor Loss
@@ -81,12 +81,11 @@ class DDPGAgent:
 		critic_loss.backward()
 		self.optimizer_critic.step()
 		
-		if ep % 2 == 0:
-			for target_param, param in zip(self.actor_target.parameters(), self.actor.parameters()):
-				target_param.data.copy_(self.tau * param + (1 - self.tau) * target_param)
+		for target_param, param in zip(self.actor_target.parameters(), self.actor.parameters()):
+			target_param.data.copy_(self.tau * param + (1 - self.tau) * target_param)
 
-			for target_param, param in zip(self.critic_target.parameters(), self.critic.parameters()):
-				target_param.data.copy_(self.tau * param + (1 - self.tau) * target_param)
+		for target_param, param in zip(self.critic_target.parameters(), self.critic.parameters()):
+			target_param.data.copy_(self.tau * param + (1 - self.tau) * target_param)
 
 
 	def save_model(self, file_name = None):

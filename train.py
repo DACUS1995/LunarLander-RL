@@ -129,7 +129,7 @@ def main(args: Namespace) -> None:
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--mode", type=str, default="continuous", help="mode of env")
-	parser.add_argument("-ep", "--episodes", type=int, default=100, help="number of episodes")
+	parser.add_argument("-ep", "--episodes", type=int, default=1000, help="number of episodes")
 	parser.add_argument("-mem", "--replay-memory-size", type=int, default=10000, help="replay memory size")
 	parser.add_argument("--max-steps", type=int, default=1000, help="max steps for episode")
 	parser.add_argument("--batch-size", type=int, default=32, help="model optimization batch sizes")
