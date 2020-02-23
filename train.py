@@ -45,7 +45,7 @@ def train(train_config):
 	episode_rewards = []
 	episode_loss = []
 	evaluation_rewards = []
-
+	best_evaluation_score = float("-inf")
 
 	for episode in range(train_config.episodes):
 		state = env.reset()
@@ -71,13 +71,19 @@ def train(train_config):
 		print("[Training] Episode " + str(episode) + ": " + str(episode_reward))
 
 		if episode % 5 == 0:
-			curr_rewards = evaluate(agent, env, 1, True)
+			curr_rewards = evaluate(agent, env, 5, True)
 			evaluation_rewards.append(sum(curr_rewards) / len(curr_rewards))
+			
+			if best_evaluation_score < evaluation_rewards[-1]:
+				if train_config.save == True:
+					agent.save_model()
+				best_evaluation_score = evaluation_rewards[-1]
 
 
 		if hasattr(agent, "noise"):
 			agent.noise.reset()
 
+	print(f"Best evaluation score: {best_evaluation_score}")
 
 	plot_final_results({
 		"Rewards": episode_rewards,
@@ -85,7 +91,13 @@ def train(train_config):
 	})
 
 
-def evaluate(agent, env, num_episodes = 1, render = False, num_steps = 50000):
+def evaluate(
+	agent, 
+	env, 
+	num_episodes = 1, 
+	render = False, 
+	num_steps = 50000
+	):
 	episode_rewards = []
 
 	with torch.no_grad():
@@ -105,7 +117,9 @@ def evaluate(agent, env, num_episodes = 1, render = False, num_steps = 50000):
 
 				if done:
 					break
-			
+
+			# Render only the first episode
+			render = False
 			print(f"[Evaluation] episode reward: {episode_reward}")
 
 			# End of episode
@@ -123,8 +137,8 @@ def main(args: Namespace) -> None:
 
 		agent = train(train_config)
 		
-		if train_config.save == True:
-			agent.save_model()
+		# if train_config.save == True:
+		# 	agent.save_model()
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()

@@ -57,9 +57,9 @@ class DDPGAgent:
 		dones = torch.tensor(dones).float().to(self.device)
 
 		# Critic Loss
-		curr_q_value = self.critic(states, actions)
+		curr_q_value = self.critic(states, actions).squeeze()
 		next_action = self.actor_target(next_states)
-		next_q_value = self.critic_target(states, next_action)
+		next_q_value = self.critic_target(states, next_action).squeeze()
 
 		target_q_value = rewards + self.gamma * next_q_value
 		critic_loss = F.mse_loss(curr_q_value, target_q_value.detach())
@@ -90,7 +90,7 @@ class DDPGAgent:
 
 	def save_model(self, file_name = None):
 		if file_name is None:
-			file_name = f"model_ddpg_{datetime.datetime.now()}.pt"
+			file_name = f"model_ddpg.pt"
 		torch.save(self.actor.state_dict(), file_name)
 
 	def load_model(self, file_name):
@@ -132,7 +132,7 @@ class Critic(nn.Module):
 
 	def forward(self, state, action):
 		input = torch.cat((state, action), 1)
-		return F.tanh(self.fc(input))
+		return torch.tanh(self.fc(input))
 
 
 class OUNoise():
