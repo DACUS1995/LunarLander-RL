@@ -30,9 +30,8 @@ def get_agent(device, env, mode="discrete"):
 		return agent
 
 
-def run_simulation(max_steps, num_episodes = 1):
+def run_simulation(max_steps, num_episodes = 1, mode="discrete"):
 	device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-	mode = "discrete"
 
 	env = get_environment(mode)
 	agent = get_agent(device, env, mode)
@@ -63,7 +62,8 @@ def run_simulation(max_steps, num_episodes = 1):
 def main(args):
 	run_simulation(
 		max_steps=args.max_steps, 
-		num_episodes=args.episodes
+		num_episodes=args.episodes,
+		mode=args.mode
 	)
 
 
@@ -72,5 +72,6 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-ep", "--episodes", type=int, default=100, help="number of episodes")
 	parser.add_argument("--max-steps", type=int, default=1000, help="max steps for episode")
+	parser.add_argument("--mode", type=str, default="discrete", help="environment mode")
 	args = parser.parse_args()
 	main(args)

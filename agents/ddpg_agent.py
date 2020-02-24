@@ -63,9 +63,9 @@ class DDPGAgent:
 
 		target_q_value = rewards + (1 - dones) * self.gamma * next_q_value
 		critic_loss = F.mse_loss(curr_q_value, target_q_value.detach())
-		
+
 		# Actor Loss
-		actor_loss = -self.critic(states, self.actor(states)).mean()
+		actor_loss = -self.critic(states, self.actor(states)).mean() #negative because we want to maximize
 
 		return critic_loss, actor_loss
 
