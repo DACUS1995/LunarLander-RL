@@ -59,7 +59,7 @@ class DDPGAgent:
 		# Critic Loss
 		curr_q_value = self.critic(states, actions)
 		next_action = self.actor_target(next_states)
-		next_q_value = self.critic_target(states, next_action)
+		next_q_value = self.critic_target(next_states, next_action)
 
 		target_q_value = rewards + (1 - dones) * self.gamma * next_q_value
 		critic_loss = F.mse_loss(curr_q_value, target_q_value.detach())
