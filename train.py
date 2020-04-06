@@ -51,8 +51,11 @@ def train(train_config):
 		state = env.reset()
 		episode_reward = 0
 
+		if agent.eps > 0.1:
+			agent.eps -= 0.05
+
 		for step in range(train_config.max_steps):
-			action = agent.get_action(state, eps=0.1, step=step)
+			action = agent.get_action(state)
 
 			next_state, reward, done, _ = env.step(action)
 			agent.memory.push(state, action, reward, next_state, done)
@@ -143,7 +146,7 @@ def main(args: Namespace) -> None:
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--mode", type=str, default="continuous", help="mode of env")
+	parser.add_argument("--mode", type=str, default="discrete", help="mode of env")
 	parser.add_argument("-ep", "--episodes", type=int, default=100, help="number of episodes")
 	parser.add_argument("-mem", "--replay-memory-size", type=int, default=10000, help="replay memory size")
 	parser.add_argument("--max-steps", type=int, default=1000, help="max steps for episode")

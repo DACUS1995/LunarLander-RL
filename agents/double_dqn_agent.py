@@ -16,6 +16,7 @@ class DoubleDQNAgent:
 		self.gamma = gamma
 		self.tau = tau
 		self.env = env
+		self.eps = 0.99
 
 		self.model = DQN(env.observation_space.shape[0], env.action_space.n).to(self.device)
 		self.target_model = DQN(env.observation_space.shape[0], env.action_space.n).to(self.device)
@@ -26,9 +27,10 @@ class DoubleDQNAgent:
 		self.optimizer = torch.optim.Adam(self.model.parameters())
 		
 		
-	def get_action(self, state, eps=0.1, step=0):
-		if random.random() < eps:
-			return self.env.action_space.sample()
+	def get_action(self, state, eps=None):
+		if eps is None:
+			if random.random() < self.eps:
+				return self.env.action_space.sample()
 
 		state = torch.tensor(state).float().unsqueeze(0).to(self.device)
 		q_vals = self.model(state)
@@ -61,7 +63,6 @@ class DoubleDQNAgent:
 	def update(self, batch_size, ep):
 		batch = self.memory.sample(batch_size)
 		loss = self.compute_loss(batch)
-
 		self.optimizer.zero_grad()
 		loss.backward()
 		self.optimizer.step()

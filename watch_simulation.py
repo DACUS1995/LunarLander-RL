@@ -42,7 +42,7 @@ def run_simulation(max_steps, num_episodes = 1, mode="discrete"):
 			episode_reward = 0
 
 			for step in range(max_steps):
-				action = agent.get_action(state)
+				action = agent.get_action(state, 0)
 
 				env.render()
 				next_state, reward, done, _ = env.step(action)
